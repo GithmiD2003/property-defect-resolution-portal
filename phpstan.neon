@@ -11,3 +11,9 @@ parameters:
         - routes/
 
     level: 7
+
+    ignoreErrors:
+        # Used by the single-file Livewire profile page outside scan paths.
+        -
+            identifier: trait.unused
+            path: app/Concerns/ProfileValidationRules.php
