@@ -96,5 +96,102 @@
                 </form>
             @endcan
         </section>
+
+        @can('manageMembers', $property)
+    <section class="space-y-4 rounded-xl border border-zinc-300 p-5">
+        <h2 class="text-lg font-semibold">Property owners</h2>
+
+        <p class="text-sm text-zinc-500">
+            Assigned owners can view this property.
+            Removing access does not delete their account.
+        </p>
+
+        <ul class="space-y-3">
+            @forelse ($property->members as $member)
+                <li class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-200 p-3">
+                    <div>
+                        <p class="font-medium">{{ $member->name }}</p>
+                        <p class="break-all text-sm text-zinc-500">
+                            {{ $member->email }}
+                        </p>
+                    </div>
+
+                    <form
+                        method="POST"
+                        action="{{ route('properties.members.destroy', [
+                            'property' => $property,
+                            'user' => $member,
+                        ]) }}"
+                    >
+                        @csrf
+                        @method('DELETE')
+
+                        <button
+                            type="submit"
+                            class="rounded-lg border border-red-300 px-3 py-2 text-red-600"
+                        >
+                            Remove access
+                        </button>
+                    </form>
+                </li>
+            @empty
+                <li class="text-zinc-500">No owners assigned yet.</li>
+            @endforelse
+        </ul>
+
+        @if ($availableOwners->isNotEmpty())
+            <form
+                method="POST"
+                action="{{ route('properties.members.store', $property) }}"
+                class="space-y-3 border-t border-zinc-200 pt-4"
+            >
+                @csrf
+
+                <label for="owner-id" class="block font-medium">
+                    Assign an existing owner
+                </label>
+
+                <select
+                    id="owner-id"
+                    name="user_id"
+                    required
+                    class="w-full rounded-lg border border-zinc-300 bg-transparent p-3"
+                >
+                    <option value="">Select an owner</option>
+
+                    @foreach ($availableOwners as $owner)
+                        <option
+                            value="{{ $owner->id }}"
+                            @selected((string) old('user_id') === (string) $owner->id)
+                        >
+                            {{ $owner->name }} — {{ $owner->email }}
+                        </option>
+                    @endforeach
+                </select>
+
+                @error('user_id')
+                    <p role="alert" class="text-sm text-red-600">
+                        {{ $message }}
+                    </p>
+                @enderror
+
+                <button
+                    type="submit"
+                    class="rounded-lg bg-blue-700 px-5 py-3 font-medium text-white hover:bg-blue-800"
+                >
+                    Assign owner
+                </button>
+            </form>
+        @else
+            <p class="text-sm text-zinc-500">
+                No additional owner accounts are available to assign.
+            </p>
+        @endif
+
+        <a href="{{ route('invitations.index') }}" class="inline-block underline">
+            Invite a new owner
+        </a>
+    </section>
+@endcan
     </div>
 </x-layouts::app>

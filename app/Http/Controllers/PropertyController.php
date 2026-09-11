@@ -64,8 +64,17 @@ class PropertyController extends Controller
             'members',
         ]);
 
+        $availableOwners = Gate::allows('manageMembers', $property)
+            ? User::query()
+                ->where('role', UserRole::Owner->value)
+                ->whereNotIn('id', $property->members->modelKeys())
+                ->orderBy('name')
+                ->get()
+            : collect();
+
         return view('properties.show', [
             'property' => $property,
+            'availableOwners' => $availableOwners,
         ]);
     }
 
