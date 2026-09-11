@@ -12,10 +12,35 @@
 
             <flux:sidebar.nav>
                 <flux:sidebar.group :heading="__('Platform')" class="grid">
-                    <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
-                        {{ __('Dashboard') }}
-                    </flux:sidebar.item>
-                </flux:sidebar.group>
+    <flux:sidebar.item
+        icon="home"
+        :href="route('dashboard')"
+        :current="request()->routeIs('dashboard')"
+        wire:navigate
+    >
+        {{ __('Dashboard') }}
+    </flux:sidebar.item>
+
+    @can('viewAny', \App\Models\Property::class)
+        <flux:sidebar.item
+            :href="route('properties.index')"
+            :current="request()->routeIs('properties.*')"
+            wire:navigate
+        >
+            {{ __('Properties') }}
+        </flux:sidebar.item>
+    @endcan
+
+    @can('manage-users')
+        <flux:sidebar.item
+            :href="route('invitations.index')"
+            :current="request()->routeIs('invitations.*')"
+            wire:navigate
+        >
+            {{ __('Invitations') }}
+        </flux:sidebar.item>
+    @endcan
+</flux:sidebar.group>
             </flux:sidebar.nav>
 
             <flux:spacer />
