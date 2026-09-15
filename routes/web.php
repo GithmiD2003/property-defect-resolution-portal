@@ -1,8 +1,11 @@
 <?php
 
 use App\Http\Controllers\AcceptInvitationController;
+use App\Http\Controllers\DefectAssignmentController;
 use App\Http\Controllers\DefectController;
 use App\Http\Controllers\DefectPhotoController;
+use App\Http\Controllers\DefectReviewController;
+use App\Http\Controllers\DefectWorkflowController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\PropertyController;
 use App\Http\Controllers\PropertyMemberController;
@@ -13,6 +16,31 @@ Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
+
+    Route::patch(
+        'defects/{defect}/verify',
+        [DefectReviewController::class, 'verify'],
+    )->name('defects.verify');
+
+    Route::patch(
+        'defects/{defect}/reopen',
+        [DefectReviewController::class, 'reopen'],
+    )->name('defects.reopen');
+
+    Route::patch(
+        'defects/{defect}/start',
+        [DefectWorkflowController::class, 'start'],
+    )->name('defects.start');
+
+    Route::post(
+        'defects/{defect}/repair',
+        [DefectWorkflowController::class, 'repair'],
+    )->middleware('throttle:10,1')->name('defects.repair');
+
+    Route::patch(
+        'defects/{defect}/assignment',
+        [DefectAssignmentController::class, 'update'],
+    )->name('defects.assignment.update');
 
     Route::resource('properties', PropertyController::class)
         ->only([

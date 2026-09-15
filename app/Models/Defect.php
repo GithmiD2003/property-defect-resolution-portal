@@ -20,6 +20,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $priority
  * @property DefectStatus $status
  * @property CarbonInterface|null $due_date
+ * @property string|null $repair_notes
+ * @property CarbonInterface|null $started_at
+ * @property CarbonInterface|null $repaired_at
+ * @property int|null $reviewed_by
+ * @property CarbonInterface|null $verified_at
+ * @property CarbonInterface|null $reopened_at
+ * @property string|null $reopen_reason
  */
 class Defect extends Model
 {
@@ -37,6 +44,10 @@ class Defect extends Model
         return [
             'status' => DefectStatus::class,
             'due_date' => 'date',
+            'started_at' => 'immutable_datetime',
+            'repaired_at' => 'immutable_datetime',
+            'verified_at' => 'immutable_datetime',
+            'reopened_at' => 'immutable_datetime',
         ];
     }
 
@@ -68,5 +79,11 @@ class Defect extends Model
     public function photos(): HasMany
     {
         return $this->hasMany(DefectPhoto::class);
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
     }
 }
