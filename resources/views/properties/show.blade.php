@@ -4,6 +4,17 @@
             Back to properties
         </a>
 
+        @can('create', [\App\Models\Defect::class, $property])
+    <div>
+        <a
+            href="{{ route('properties.defects.create', $property) }}"
+            class="inline-block rounded-lg bg-blue-700 px-5 py-3 font-medium text-white hover:bg-blue-800"
+        >
+            Report defect
+        </a>
+    </div>
+        @endcan
+
         @if (session('success'))
             <div role="status" class="rounded-lg bg-green-50 p-4 text-green-800">
                 {{ session('success') }}
