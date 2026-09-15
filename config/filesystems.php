@@ -29,6 +29,13 @@ return [
     */
 
     'disks' => [
+        'defect_photos' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/defect-photos'),
+            'visibility' => 'private',
+            'serve' => false,
+            'throw' => true,
+        ],
 
         'local' => [
             'driver' => 'local',

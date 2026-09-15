@@ -21,6 +21,16 @@
         {{ __('Dashboard') }}
     </flux:sidebar.item>
 
+    @can('viewAny', \App\Models\Defect::class)
+    <flux:sidebar.item
+        :href="route('defects.index')"
+        :current="request()->routeIs('defects.*', 'properties.defects.*')"
+        wire:navigate
+    >
+        {{ __('Defects') }}
+    </flux:sidebar.item>
+    @endcan
+
     @can('viewAny', \App\Models\Property::class)
         <flux:sidebar.item
             :href="route('properties.index')"
