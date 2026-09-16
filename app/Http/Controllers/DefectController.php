@@ -8,6 +8,7 @@ use App\Models\Defect;
 use App\Models\DefectPhoto;
 use App\Models\Property;
 use App\Models\User;
+use App\Queries\VisibleDefects;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -37,22 +38,52 @@ class DefectController extends Controller
         $user = $request->user();
         abort_unless($user instanceof User, 401);
 
-        $query = Defect::query()->with([
-            'property',
-            'room',
-            'assignee',
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'status' => ['nullable', Rule::enum(DefectStatus::class)],
+            'priority' => [
+                'nullable',
+                Rule::in(['low', 'medium', 'high', 'urgent']),
+            ],
+            'overdue' => ['nullable', 'boolean'],
         ]);
 
-        if ($user->role === UserRole::Owner) {
-            $query->whereHas('property.members', function ($members) use ($user) {
-                $members->where('users.id', $user->id);
+        $query = VisibleDefects::forUser($user)
+            ->with(['property', 'room', 'assignee']);
+
+        $search = trim($filters['search'] ?? '');
+
+        if ($search !== '') {
+            $query->where(function ($matches) use ($search) {
+                $matches->where('title', 'like', '%'.$search.'%')
+                    ->orWhereHas('property', function ($properties) use ($search) {
+                        $properties->where('name', 'like', '%'.$search.'%');
+                    });
             });
-        } elseif ($user->role === UserRole::Contractor) {
-            $query->where('assigned_to', $user->id);
+        }
+
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['priority'])) {
+            $query->where('priority', $filters['priority']);
+        }
+
+        if ($request->boolean('overdue')) {
+            $query->whereDate('due_date', '<', now()->format('Y-m-d'))
+                ->whereNotIn('status', [
+                    DefectStatus::Repaired->value,
+                    DefectStatus::Verified->value,
+                ]);
         }
 
         return view('defects.index', [
-            'defects' => $query->latest()->paginate(15),
+            'defects' => $query->orderByDesc('id')
+                ->paginate(15)
+                ->withQueryString(),
+            'statuses' => DefectStatus::cases(),
+            'filters' => $filters,
         ]);
     }
 
