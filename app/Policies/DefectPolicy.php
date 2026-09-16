@@ -90,11 +90,7 @@ class DefectPolicy
 
     private function canReview(User $user, Defect $defect): bool
     {
-        return match ($user->role) {
-            UserRole::Manager => true,
-            UserRole::Owner => $this->view($user, $defect),
-            default => false,
-        };
+        return $user->role === UserRole::Manager;
     }
 
     public function comment(User $user, Defect $defect): bool

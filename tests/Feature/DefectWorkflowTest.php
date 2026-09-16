@@ -265,7 +265,7 @@ test('work cannot restart or be reassigned while in progress', function () {
         ->toBe($this->contractor->id);
 });
 
-test('managers and linked owners can verify reopen and restart the cycle', function (
+test('managers can verify reopen and restart the cycle', function (
     string $actor,
 ) {
     $this->defect->status = DefectStatus::Repaired;
@@ -307,10 +307,9 @@ test('managers and linked owners can verify reopen and restart the cycle', funct
         ->assertRedirect();
 
     expect($this->defect->fresh()->status)->toBe(DefectStatus::InProgress);
-})->with(['manager', 'owner']);
+})->with(['manager']);
 
-test('contractors and unlinked owners cannot review repairs', function (
-    string $actor,
+test('contractors and owners cannot review repairs', function (string $actor,
 ) {
     $this->defect->status = DefectStatus::Repaired;
     $this->defect->save();
@@ -324,7 +323,7 @@ test('contractors and unlinked owners cannot review repairs', function (
     ])->assertForbidden();
 
     expect($this->defect->fresh()->status)->toBe(DefectStatus::Repaired);
-})->with(['contractor', 'otherContractor', 'outsider']);
+})->with(['contractor', 'otherContractor', 'outsider', 'owner']);
 
 test('reopening requires a reason', function () {
     $this->defect->status = DefectStatus::Repaired;
@@ -347,4 +346,40 @@ test('unfinished defects cannot be verified or reopened', function () {
     ])->assertForbidden();
 
     expect($this->defect->fresh()->status)->toBe(DefectStatus::Assigned);
+});
+
+test('linked owners can request review through comments but cannot reopen verified repairs', function () {
+    $this->defect->status = DefectStatus::Verified;
+    $this->defect->verified_at = now();
+    $this->defect->reviewed_by = $this->manager->id;
+    $this->defect->save();
+
+    $this->actingAs($this->owner)
+        ->get($this->url)
+        ->assertOk()
+        ->assertDontSee(
+            'action="'.route('defects.verify', $this->defect).'"',
+            false,
+        )
+        ->assertDontSee(
+            'action="'.route('defects.reopen', $this->defect).'"',
+            false,
+        );
+
+    $this->patch($this->url.'/reopen', [
+        'reopen_reason' => 'The tap is leaking again.',
+    ])->assertForbidden();
+
+    $this->post($this->url.'/comments', [
+        'body' => 'Please review the tap again; it is still leaking.',
+    ])->assertSessionHasNoErrors()->assertRedirect();
+
+    $this->assertDatabaseHas('defect_comments', [
+        'defect_id' => $this->defect->id,
+        'user_id' => $this->owner->id,
+        'body' => 'Please review the tap again; it is still leaking.',
+    ]);
+
+    expect($this->defect->fresh()->status)->toBe(DefectStatus::Verified)
+        ->and($this->defect->fresh()->reviewed_by)->toBe($this->manager->id);
 });
