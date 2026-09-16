@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AcceptInvitationController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DefectAssignmentController;
 use App\Http\Controllers\DefectCommentController;
 use App\Http\Controllers\DefectController;
@@ -16,7 +17,8 @@ use Illuminate\Support\Facades\Route;
 Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::view('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
     Route::post(
         'defects/{defect}/comments',
