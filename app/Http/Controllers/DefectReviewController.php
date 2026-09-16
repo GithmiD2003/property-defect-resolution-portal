@@ -32,6 +32,12 @@ class DefectReviewController extends Controller
             $locked->verified_at = now();
             $locked->status = DefectStatus::Verified;
             $locked->save();
+
+            $locked->recordActivity(
+                $user,
+                'verified',
+                'Repair verified.',
+            );
         });
 
         return redirect()
@@ -69,6 +75,13 @@ class DefectReviewController extends Controller
             $locked->verified_at = null;
             $locked->status = DefectStatus::Reopened;
             $locked->save();
+
+            $locked->recordActivity(
+                $user,
+                'reopened',
+                'Defect reopened for further repair.',
+                ['reason' => $validated['reopen_reason']],
+            );
         });
 
         return redirect()

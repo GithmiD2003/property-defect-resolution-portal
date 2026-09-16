@@ -352,6 +352,109 @@
     </section>
 @endcan
 
+<section class="space-y-4 rounded-xl border border-zinc-300 p-5">
+    <h2 class="text-lg font-semibold">Activity history</h2>
+
+    @forelse ($activities as $activity)
+        <article class="rounded-lg border border-zinc-300 p-4">
+            <p class="font-medium">{{ $activity->description }}</p>
+
+            <p class="mt-1 text-sm">
+                {{ $activity->user?->name ?? 'Deleted user' }}
+                &middot;
+                {{ $activity->created_at->format('d M Y H:i') }}
+                ({{ config('app.timezone') }})
+            </p>
+
+            @if ($activity->event === 'assigned')
+                <p class="mt-3 text-sm">
+                    Priority:
+                    {{ ucfirst($activity->metadata['priority'] ?? '') }}
+                    &middot;
+                    Due: {{ $activity->metadata['due_date'] ?? 'Not set' }}
+                </p>
+            @endif
+
+            @if ($activity->event === 'repaired')
+                <p class="mt-3 whitespace-pre-line">{{ $activity->metadata['repair_notes'] ?? '' }}</p>
+            @endif
+
+            @if ($activity->event === 'reopened')
+                <p class="mt-3 whitespace-pre-line">{{ $activity->metadata['reason'] ?? '' }}</p>
+            @endif
+        </article>
+    @empty
+        <p>No activity has been recorded yet.</p>
+    @endforelse
+
+    {{ $activities->links() }}
+</section>
+
+<section class="space-y-4 rounded-xl border border-zinc-300 p-5">
+    <h2 class="text-lg font-semibold">Comments</h2>
+
+    @can('comment', $defect)
+        <form
+            method="POST"
+            action="{{ route('defects.comments.store', $defect) }}"
+            class="space-y-3"
+        >
+            @csrf
+
+            <div>
+                <label for="comment_body" class="mb-2 block font-medium">
+                    Add a comment
+                </label>
+
+                <textarea
+                    id="comment_body"
+                    name="body"
+                    rows="3"
+                    required
+                    maxlength="5000"
+                    class="w-full rounded-lg border border-zinc-300 bg-white p-3 text-zinc-900"
+                >{{ old('body') }}</textarea>
+
+                @error('body')
+                    <p role="alert" class="mt-2 text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <p class="text-sm">
+                Comments are visible to users who have access to this defect.
+            </p>
+
+            <button
+                type="submit"
+                class="rounded-lg bg-blue-700 px-4 py-3 font-medium text-white"
+            >
+                Add comment
+            </button>
+        </form>
+    @endcan
+
+    <div class="space-y-4">
+        @forelse ($comments as $comment)
+            <article class="rounded-lg border border-zinc-300 p-4">
+                <p class="font-medium">
+                    {{ $comment->user?->name ?? 'Deleted user' }}
+                </p>
+
+                <p class="mt-1 text-sm">
+                    {{ $comment->created_at->format('d M Y H:i') }}
+                    ({{ config('app.timezone') }})
+                </p>
+
+                <p class="mt-3 whitespace-pre-line">{{ $comment->body }}</p>
+            </article>
+        @empty
+            <p>No comments yet.</p>
+        @endforelse
+    </div>
+
+    {{ $comments->links() }}
+</section> 
+
         <section class="space-y-4">
             <h2 class="text-lg font-semibold">Photos</h2>
 

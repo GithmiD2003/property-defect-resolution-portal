@@ -151,6 +151,17 @@ class DefectController extends Controller
                     $photo->save();
                 }
 
+                $defect->recordActivity(
+                    $user,
+                    'reported',
+                    'Defect reported.',
+                    [
+                        'title' => $defect->title,
+                        'category' => $defect->category,
+                        'room_id' => $defect->room_id,
+                    ],
+                );
+
                 return $defect;
             });
         } catch (Throwable $exception) {
@@ -209,6 +220,16 @@ class DefectController extends Controller
             'defect' => $defect,
             'categories' => self::CATEGORIES,
             'contractors' => $contractors,
+
+            'activities' => $defect->activities()
+                ->with('user')
+                ->orderByDesc('id')
+                ->paginate(15, ['*'], 'activity_page'),
+
+            'comments' => $defect->comments()
+                ->with('user')
+                ->orderByDesc('id')
+                ->paginate(10, ['*'], 'comments_page'),
         ]);
     }
 }

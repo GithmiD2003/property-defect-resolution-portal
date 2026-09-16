@@ -86,4 +86,36 @@ class Defect extends Model
     {
         return $this->belongsTo(User::class, 'reviewed_by');
     }
+
+    /** @return HasMany<DefectComment, $this> */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(DefectComment::class);
+    }
+
+    /** @return HasMany<DefectActivity, $this> */
+    public function activities(): HasMany
+    {
+        return $this->hasMany(DefectActivity::class);
+    }
+
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
+    public function recordActivity(
+        User $actor,
+        string $event,
+        string $description,
+        array $metadata = [],
+    ): void {
+        $activity = new DefectActivity([
+            'event' => $event,
+            'description' => $description,
+            'metadata' => $metadata,
+        ]);
+
+        $activity->defect()->associate($this);
+        $activity->user()->associate($actor);
+        $activity->save();
+    }
 }
