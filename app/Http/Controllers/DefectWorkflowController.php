@@ -18,11 +18,14 @@ use Throwable;
 
 class DefectWorkflowController extends Controller
 {
-    public function start(Defect $defect): RedirectResponse
+    public function start(Request $request, Defect $defect): RedirectResponse
     {
         Gate::authorize('startWork', $defect);
 
-        DB::transaction(function () use ($defect): void {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+
+        DB::transaction(function () use ($defect, $user): void {
             $locked = Defect::query()
                 ->lockForUpdate()
                 ->findOrFail($defect->id);
@@ -32,6 +35,12 @@ class DefectWorkflowController extends Controller
             $locked->status = DefectStatus::InProgress;
             $locked->started_at = now();
             $locked->save();
+
+            $locked->recordActivity(
+                $user,
+                'work_started',
+                'Repair work started.',
+            );
         });
 
         return redirect()
@@ -111,6 +120,16 @@ class DefectWorkflowController extends Controller
                 $locked->repaired_at = now();
                 $locked->status = DefectStatus::Repaired;
                 $locked->save();
+
+                $locked->recordActivity(
+                    $user,
+                    'repaired',
+                    'Repair submitted for verification.',
+                    [
+                        'repair_notes' => $validated['repair_notes'],
+                        'photo_paths' => $storedPaths,
+                    ],
+                );
             });
         } catch (Throwable $exception) {
             foreach ($storedPaths as $path) {

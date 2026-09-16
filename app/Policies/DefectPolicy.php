@@ -97,6 +97,11 @@ class DefectPolicy
         };
     }
 
+    public function comment(User $user, Defect $defect): bool
+    {
+        return $this->view($user, $defect);
+    }
+
     public function delete(User $user, Defect $defect): bool
     {
         return false;

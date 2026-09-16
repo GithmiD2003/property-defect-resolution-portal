@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AcceptInvitationController;
 use App\Http\Controllers\DefectAssignmentController;
+use App\Http\Controllers\DefectCommentController;
 use App\Http\Controllers\DefectController;
 use App\Http\Controllers\DefectPhotoController;
 use App\Http\Controllers\DefectReviewController;
@@ -16,6 +17,11 @@ Route::view('/', 'welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('dashboard', 'dashboard')->name('dashboard');
+
+    Route::post(
+        'defects/{defect}/comments',
+        [DefectCommentController::class, 'store'],
+    )->middleware('throttle:10,1')->name('defects.comments.store');
 
     Route::patch(
         'defects/{defect}/verify',

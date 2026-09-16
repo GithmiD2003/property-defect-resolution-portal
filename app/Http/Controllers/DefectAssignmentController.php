@@ -37,7 +37,10 @@ class DefectAssignmentController extends Controller
             ],
         ]);
 
-        DB::transaction(function () use ($defect, $validated): void {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+
+        DB::transaction(function () use ($defect, $validated, $user): void {
             $locked = Defect::query()
                 ->lockForUpdate()
                 ->findOrFail($defect->id);
@@ -62,6 +65,17 @@ class DefectAssignmentController extends Controller
             $locked->setAttribute('due_date', $validated['due_date']);
             $locked->status = DefectStatus::Assigned;
             $locked->save();
+
+            $locked->recordActivity(
+                $user,
+                'assigned',
+                'Assignment saved for '.$contractor->name.'.',
+                [
+                    'assigned_to' => $contractor->id,
+                    'priority' => $locked->priority,
+                    'due_date' => $locked->due_date?->format('Y-m-d'),
+                ],
+            );
         });
 
         return redirect()
