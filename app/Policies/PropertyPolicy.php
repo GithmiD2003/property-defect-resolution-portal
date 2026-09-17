@@ -48,6 +48,11 @@ class PropertyPolicy
         return $user->role === UserRole::Manager;
     }
 
+    public function handoverReport(User $user, Property $property): bool
+    {
+        return $user->role === UserRole::Manager;
+    }
+
     public function delete(User $user, Property $property): bool
     {
         return false;

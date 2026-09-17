@@ -8,6 +8,7 @@ use App\Http\Controllers\DefectController;
 use App\Http\Controllers\DefectPhotoController;
 use App\Http\Controllers\DefectReviewController;
 use App\Http\Controllers\DefectWorkflowController;
+use App\Http\Controllers\HandoverReportController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\PropertyController;
 use App\Http\Controllers\PropertyMemberController;
@@ -19,6 +20,11 @@ Route::view('/', 'welcome')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
+
+    Route::get(
+        'properties/{property}/handover-report',
+        [HandoverReportController::class, 'show'],
+    )->name('properties.handover-report');
 
     Route::post(
         'defects/{defect}/comments',

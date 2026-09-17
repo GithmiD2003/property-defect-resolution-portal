@@ -4,6 +4,19 @@
             Back to properties
         </a>
 
+        @can('handoverReport', $property)
+    <div class="mt-3">
+        <a
+            href="{{ route('properties.handover-report', $property) }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-block rounded-lg bg-blue-700 px-4 py-3 font-medium text-white"
+        >
+            Handover report
+        </a>
+    </div>
+@endcan
+
         @can('create', [\App\Models\Defect::class, $property])
     <div>
         <a
