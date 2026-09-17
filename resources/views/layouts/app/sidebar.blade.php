@@ -49,7 +49,17 @@
         >
             {{ __('Invitations') }}
         </flux:sidebar.item>
+
+        <flux:sidebar.item
+    :href="route('users.index')"
+    :current="request()->routeIs('users.*')"
+    wire:navigate
+>
+    {{ __('Users') }}
+</flux:sidebar.item>
+
     @endcan
+
 </flux:sidebar.group>
             </flux:sidebar.nav>
 

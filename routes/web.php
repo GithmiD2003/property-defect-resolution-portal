@@ -13,6 +13,7 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\PropertyController;
 use App\Http\Controllers\PropertyMemberController;
 use App\Http\Controllers\RoomController;
+use App\Http\Controllers\UserStatusController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome')->name('home');
@@ -20,6 +21,12 @@ Route::view('/', 'welcome')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
+
+    Route::get('users', [UserStatusController::class, 'index'])
+        ->name('users.index');
+
+    Route::patch('users/{user}/status', [UserStatusController::class, 'update'])
+        ->name('users.status.update');
 
     Route::get(
         'properties/{property}/handover-report',

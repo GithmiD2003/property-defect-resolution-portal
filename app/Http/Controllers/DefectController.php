@@ -241,11 +241,12 @@ class DefectController extends Controller
         ]);
 
         $contractors = Gate::allows('assign', $defect)
-            ? User::query()
-                ->where('role', UserRole::Contractor->value)
-                ->orderBy('name')
-                ->get(['id', 'name', 'email'])
-            : collect();
+    ? User::query()
+        ->where('role', UserRole::Contractor->value)
+        ->where('is_active', true)
+        ->orderBy('name')
+        ->get(['id', 'name', 'email'])
+    : collect();
 
         return view('defects.show', [
             'defect' => $defect,
