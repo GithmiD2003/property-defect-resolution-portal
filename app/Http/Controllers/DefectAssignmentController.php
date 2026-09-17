@@ -24,7 +24,8 @@ class DefectAssignmentController extends Controller
                 'required',
                 'integer',
                 Rule::exists('users', 'id')
-                    ->where('role', UserRole::Contractor->value),
+                    ->where('role', UserRole::Contractor->value)
+                    ->where('is_active', true),
             ],
             'priority' => [
                 'required',
@@ -51,6 +52,7 @@ class DefectAssignmentController extends Controller
             $contractor = User::query()
                 ->whereKey($validated['assigned_to'])
                 ->where('role', UserRole::Contractor->value)
+                ->where('is_active', true)
                 ->lockForUpdate()
                 ->first();
 

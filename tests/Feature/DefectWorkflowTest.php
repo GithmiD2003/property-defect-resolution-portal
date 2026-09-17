@@ -383,3 +383,65 @@ test('linked owners can request review through comments but cannot reopen verifi
     expect($this->defect->fresh()->status)->toBe(DefectStatus::Verified)
         ->and($this->defect->fresh()->reviewed_by)->toBe($this->manager->id);
 });
+
+test('inactive contractors are excluded from assignment options', function () {
+    $this->otherContractor->is_active = false;
+    $this->otherContractor->save();
+
+    $this->actingAs($this->manager)
+        ->get(route('defects.show', $this->defect))
+        ->assertOk()
+        ->assertViewHas('contractors', function ($contractors): bool {
+            return $contractors->contains('id', $this->contractor->id)
+                && ! $contractors->contains('id', $this->otherContractor->id);
+        });
+});
+
+test('assignment to an inactive contractor is rejected without changing history', function () {
+    $this->otherContractor->is_active = false;
+    $this->otherContractor->save();
+
+    $activityCount = $this->defect->activities()->count();
+
+    $this->actingAs($this->manager)
+        ->patch($this->url.'/assignment', [
+            'assigned_to' => $this->otherContractor->id,
+            'priority' => 'high',
+            'due_date' => now()->addDays(3)->format('Y-m-d'),
+        ])
+        ->assertSessionHasErrors('assigned_to');
+
+    $defect = $this->defect->fresh();
+
+    expect($defect->assigned_to)->toBe($this->contractor->id)
+        ->and($defect->status)->toBe(DefectStatus::Assigned)
+        ->and($defect->priority)->toBe('medium')
+        ->and($defect->activities()->count())->toBe($activityCount);
+});
+
+test('deactivation preserves assigned defects and their activity history', function () {
+    $this->defect->recordActivity(
+        $this->contractor,
+        'test_record',
+        'Historical contractor activity.',
+    );
+
+    $activityCount = $this->defect->activities()->count();
+
+    $this->actingAs($this->manager)
+        ->patch(route('users.status.update', $this->contractor), [
+            'is_active' => false,
+        ])
+        ->assertSessionHasNoErrors();
+
+    $defect = $this->defect->fresh();
+
+    expect($defect->assigned_to)->toBe($this->contractor->id)
+        ->and($defect->assignee->name)->toBe($this->contractor->name)
+        ->and($defect->status)->toBe(DefectStatus::Assigned)
+        ->and($defect->activities()->count())->toBe($activityCount);
+
+    $this->get(route('defects.show', $defect))
+        ->assertOk()
+        ->assertSee('Historical contractor activity.');
+});
