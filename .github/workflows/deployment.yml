@@ -1,0 +1,91 @@
+name: Deployment build
+
+on:
+  push:
+    branches:
+      - setup/free-deployment
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: portal_ci
+          POSTGRES_USER: portal_ci
+          POSTGRES_PASSWORD: ci_only_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U portal_ci -d portal_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Build production image
+        run: docker build --tag portal-ci .
+
+      - name: Start application with temporary database
+        shell: bash
+        run: |
+          app_key="base64:$(openssl rand -base64 32)"
+          docker run --detach \
+            --name portal-ci \
+            --network host \
+            --env APP_ENV=production \
+            --env APP_DEBUG=false \
+            --env APP_KEY="$app_key" \
+            --env APP_URL=http://127.0.0.1:10000 \
+            --env PORT=10000 \
+            --env DB_CONNECTION=pgsql \
+            --env DB_HOST=127.0.0.1 \
+            --env DB_PORT=5432 \
+            --env DB_DATABASE=portal_ci \
+            --env DB_USERNAME=portal_ci \
+            --env DB_PASSWORD=ci_only_password \
+            --env DB_SSLMODE=disable \
+            --env SESSION_DRIVER=database \
+            --env CACHE_STORE=database \
+            --env QUEUE_CONNECTION=sync \
+            --env MAIL_MAILER=log \
+            --env DEFECT_PHOTOS_DRIVER=local \
+            --env RUN_MIGRATIONS=true \
+            portal-ci
+
+      - name: Check health and login page
+        shell: bash
+        run: |
+          ready=false
+          for attempt in {1..30}; do
+            if curl --fail --silent --output /dev/null \
+              http://127.0.0.1:10000/up; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+          if [ "$ready" != "true" ]; then
+            echo "Application did not become healthy."
+            exit 1
+          fi
+          curl --fail --silent --show-error \
+            --output /dev/null http://127.0.0.1:10000/login
+          docker exec portal-ci php artisan migrate:status
+
+      - name: Show container logs
+        if: always()
+        run: docker logs portal-ci 2>&1 || true
