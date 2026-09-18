@@ -29,13 +29,24 @@ return [
     */
 
     'disks' => [
-        'defect_photos' => [
-            'driver' => 'local',
-            'root' => storage_path('app/private/defect-photos'),
-            'visibility' => 'private',
-            'serve' => false,
-            'throw' => true,
-        ],
+        'defect_photos' => env('DEFECT_PHOTOS_DRIVER', 'local') === 's3'
+    ? [
+        'driver' => 's3',
+        'key' => env('DEFECT_PHOTOS_ACCESS_KEY_ID'),
+        'secret' => env('DEFECT_PHOTOS_SECRET_ACCESS_KEY'),
+        'region' => env('DEFECT_PHOTOS_REGION'),
+        'bucket' => env('DEFECT_PHOTOS_BUCKET', 'defect-photos'),
+        'endpoint' => env('DEFECT_PHOTOS_ENDPOINT'),
+        'use_path_style_endpoint' => true,
+        'throw' => true,
+    ]
+    : [
+        'driver' => 'local',
+        'root' => storage_path('app/private/defect-photos'),
+        'visibility' => 'private',
+        'serve' => false,
+        'throw' => true,
+    ],
 
         'local' => [
             'driver' => 'local',
