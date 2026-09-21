@@ -2,6 +2,10 @@
 
 A web application for a construction or renovation company to report property defects, coordinate repairs, and verify completion.
 
+## Live Website
+
+[Open the Property Defect Resolution Portal](https://property-defect-portal.alwaysdata.net)
+
 ## Features
 
 - Manager, contractor, and property-owner roles.
